@@ -3,7 +3,7 @@
 # location of the bossac executable.
 
 # Absolute path to your local copy of the CoreDuet repo
-coreduet_home = '/Users/dnewman/git/CoreNG'
+coreng_home = '/Users/dnewman/git/CoreNG'
 
 # 1.5.8 SAM
 bossac_path = '/Applications/Arduino-1.5.8.app//Contents/Resources/Java/hardware/tools/bossac'
