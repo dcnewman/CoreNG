@@ -43,7 +43,7 @@ site_file = home + '.rrf_arduino_paths.py'
 if isfile(site_file):
     with open(site_file) as f:
         exec(f.read(), tmp_dict)
-    keys_of_interest = [ 'bossac_path', 'coreduet_home', 'gccarm_bin' ]
+    keys_of_interest = [ 'gccarm_bin' ]
     for key in keys_of_interest:
         if key in tmp_dict:
             if type(tmp_dict[key]) is str:
@@ -54,19 +54,14 @@ if isfile(site_file):
                 raise Exception(key + ' in ' + site_file + ' is of an ' + \
                         'unsupported type')
 
-have_bossac = 'bossac_path' in globals()
-have_home   = 'coreduet_home' in globals()
-have_bin    = 'gccarm_bin' in globals()
+have_bin = 'gccarm_bin' in globals()
 
-if not (have_home and have_bin):
+if not have_bin:
   raise Exception('You must first create the file ' + site_file + \
       ' before building.  See ' + \
       '~/sample_rrf_arduino_paths.py for an example.')
 
-os.environ['COREDUET_HOME'] = coreduet_home
 os.environ['GCCARM_BIN'] = gccarm_bin
-if have_bossac:
-    os.environ['BOSSAC_PATH'] = bossac_path
 
 ###########
 #
@@ -326,10 +321,7 @@ env.Replace( CXXFLAGS = [
     '-O2',
     '-std=gnu++11' ] )
 
-env.SetDefault( COREDUET_HOME = coreduet_home )
 env.SetDefault( GCCARM_BIN = gccarm_bin )
-if have_bossac:
-  env.SetDefault( BOSSAC_PATH = bossac_path )
 
 env.Replace( RANLIB = "$GCCARM_BIN/arm-none-eabi-ranlib" )
 env.Replace( CC = "$GCCARM_BIN/arm-none-eabi-gcc" )
@@ -345,9 +337,6 @@ env.Replace( LD = "$GCCARM_BIN/arm-none-eabi-gcc" )
 env.Append( BUILDERS = { 'Elf' : Builder(action='"$GCCARM_BIN/arm-none-eabi-gcc" -Os -Wl,--gc-sections -mcpu=' + mcpu + ' "-Wl,-Map,CoreNG.map"  -o $TARGET $_LIBDIRFLAGS -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $_LIBFLAGS $SOURCES  -Wl,--end-group -lm -gcc') } )
 
 env.Append( BUILDERS = { 'Hex' : Builder(action='"$GCCARM_BIN/arm-none-eabi-objcopy" -O binary  $SOURCES $TARGET', suffix='.hex', src_suffix='.elf') } )
-
-if have_bossac:
-  env.Replace( UPLOAD = '"$BOSSAC_PATH" --port=$PORT -U $NATIVE -e -w -v -b $SOURCES -R' )
 
 # Generate the list of source directories to consider
 src_dirs = list_dirs(core_dirs, ignore_dirs)
