@@ -14,7 +14,7 @@ Duet), support for PWM outputs via timer/counter channels, and the use of
 the on-chip hardware ADC scheduler.  Also the USB interface is interrupt
 and DMA driven instead of polled.
 
-To build it, import the project into Eclipse Mars 2, select the desired
+To build it, import the project into Eclipse Mars.2, select the desired
 configuration (SAM3X8E or SAM4E8E), and press Build.  Or, if you dislike
 IDEs, then use the scons command line tool as per the directions found
 in the `INSTALL.md` file.
