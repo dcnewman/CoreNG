@@ -272,9 +272,12 @@ VariantDir(scons_variant_dir, './', 'duplicate=0')
 clean_dirs = [ join(scons_variant_dir, i) for i in core_dirs ]
 Clean('.', clean_dirs)
 
-env=Environment( tools = ['default', 'ar', 'g++', 'gcc'],
-   CPPPATH = include_paths,
-   LIBPATH = ['.'] )
+#env=Environment(
+#   CPPPATH = include_paths,
+#   LIBPATH = ['.'] )
+
+
+env = Environment( CPPPATH = include_paths )
 
 # Compiler flags shared by C and C++
 if platform == 'sam3x8e':
@@ -334,10 +337,6 @@ env.Replace( OBJCOPY = "$GCCARM_BIN/arm-none-eabi-objcopy" )
 env.Replace( ELF = "$GCCARM_BIN/arm-none-eabi-gcc" )
 env.Replace( LD = "$GCCARM_BIN/arm-none-eabi-gcc" )
 
-env.Append( BUILDERS = { 'Elf' : Builder(action='"$GCCARM_BIN/arm-none-eabi-gcc" -Os -Wl,--gc-sections -mcpu=' + mcpu + ' "-Wl,-Map,CoreNG.map"  -o $TARGET $_LIBDIRFLAGS -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $_LIBFLAGS $SOURCES  -Wl,--end-group -lm -gcc') } )
-
-env.Append( BUILDERS = { 'Hex' : Builder(action='"$GCCARM_BIN/arm-none-eabi-objcopy" -O binary  $SOURCES $TARGET', suffix='.hex', src_suffix='.elf') } )
-
 # Generate the list of source directories to consider
 src_dirs = list_dirs(core_dirs, ignore_dirs)
 
@@ -352,5 +351,4 @@ for dir in src_dirs:
 env.Depends(srcs, join(scons_variant_dir, 'libraries', 'Storage', 'sd_mmc_mem.h'))
 
 # Now generate the target library
-objs = env.Object(srcs)
-lib = env.Library(join(scons_variant_dir, target_name), objs)
+env.Library(join(scons_variant_dir, target_name), srcs)
