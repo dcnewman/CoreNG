@@ -1,12 +1,12 @@
 # CoreNG
 New hardware abstraction layer for RepRapFirmware based on ASF 3.31
 
-This is a new hardware abstraction layer for RepRapFirmware. It replaces
-the [CoreDuet project](https://github.com/dcnewman/CoreDuet) in releases
-1.11 and later of the [dc42 fork of the
-RepRapFirmware](https://github.com/dc42/RepRapFirmware).  It is based on
-the Atmel Software Framework (ASF) version 3.31 and also includes modules
-from the Arduino Due core.
+This is a new hardware abstraction layer for RepRapFirmware based on
+the Atmel Software Framework (ASF) 3.31 with some additional modules
+from the Arduino Due core.  CoreNG replaces the [CoreDuet
+project](https://github.com/dcnewman/CoreDuet) in releases 1.11 and later
+of the [dc42 fork of the
+RepRapFirmware](https://github.com/dc42/RepRapFirmware).
 
 The main advantages over the previous CoreDuet project are support for more
 recent Atmel SAM processors (including the one used in the next-generation

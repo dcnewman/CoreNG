@@ -1,8 +1,11 @@
-Traditionally, the CoreNG repo is built using the Eclipse IDE.  If that
-is to your liking, then by all means go ahead and do so.
+Normally, the CoreNG repo is built using the Eclipse IDE.  This
+fork of the CoreNG sources may also be built using the
+[scons](http://scons.org/) command line tool.  Moreover, the scons
+build supports RADDS electronics as well as Duet and DuetNG.  If you
+wish to use Eclipse and build for RADDS, then you will need to modify
+the Eclipse Project files to do so.
 
-This fork of the CoreNG sources may also be built using the
-[scons](http://scons.org/) command line tool,
+To build follow the steps listed below.
 
 1. Should your system lack Python 2.x, download and install it.
 
@@ -19,27 +22,29 @@ This fork of the CoreNG sources may also be built using the
 
 5. From this github repository, edit the file
 
-         sample_rrf_arduino_paths.py
+       sample_rrf_arduino_paths.py
 
    as appropriate to indicate the location of your installed Arduino
    application and gcc tools.  Then save this file to your home directory
    as the file
 
-         ~/.rrf_arduino_paths.py
+       ~/.rrf_arduino_paths.py
 
 6. From the top-level CoreNG repository directory, build the
-   library for Duet with the command
+   library for RADDS with the command
 
-         scons
+       scons platform=radds
 
-   For Duet NG, instead use the command
+   For Duet, instead use the command
 
-        scons platform=ng
+       scons
 
-   Once scons finishes a build, the resulting library will be the file
+   And for DuetNG,
 
-        SAM3X8E/libCoreNG.a
+       scons platform=ng
 
-   or for NG
+   Once scons finishes a build, the resulting library will be one of
 
-        SAM4E8E/libCoreNG.a
+       RADDS/libCoreNG.a
+       SAM3X8E/libCoreNG.a
+       SAM4E8E/libCoreNG.a
