@@ -2,11 +2,12 @@ import os
 import sys
 from os.path import join, expanduser, isfile
 
+# Our build target
+target_name = 'libCoreNG'
+
+# Which platform are we building for: duet, ng, or radds?
+
 platform = ARGUMENTS.get('platform', 'duet').lower()
-
-target_name       = 'libCoreNG'
-scons_variant_dir = 'SAM3X8E'
-
 if (platform == 'duet') or (platform == 'sam3x8e'):
    platform          = 'duet'
    arch              = 'SAM3X8E'
@@ -22,6 +23,8 @@ elif platform == 'radds':
 else:
    raise Exception('Unrecognized platform ' + platform)
 
+# Hardware specifics
+
 if arch == 'SAM3X8E':
    mcpu = 'cortex-m3'
    fcpu = '84000000L'
@@ -31,16 +34,19 @@ elif arch == 'SAM4E8E':
 else:
    raise Exception('Unrecognized architecture ' + arch)
 
+
+##########
+#
 # Generate a directory tree of the directories in the list dir
 # excluding any directory (and children) from the list ignore
 
 def list_dirs(dir, ignore):
-  list = []
-  for d in dir:
-    subdirs = [ d + '/' + name for name in os.listdir(d) if os.path.isdir(os.path.join(d, name)) and \
-    (name[0] != '.') and (not (d + '/' + name) in ignore) ]
-    list += list_dirs(subdirs, ignore)
-  return dir + list
+   list = []
+   for d in dir:
+      subdirs = [ d + '/' + name for name in os.listdir(d) if os.path.isdir(join(d, name)) and \
+         (name[0] != '.') and (not (d + '/' + name) in ignore) ]
+      list += list_dirs(subdirs, ignore)
+   return dir + list
 
 
 ##########
@@ -50,27 +56,24 @@ def list_dirs(dir, ignore):
 tmp_dict = {  }
 home = expanduser('~')
 if home[-1] != '/':
-    home += '/'
+   home += '/'
     
 site_file = home + '.rrf_arduino_paths.py'
 if isfile(site_file):
-    with open(site_file) as f:
-        exec(f.read(), tmp_dict)
-    keys_of_interest = [ 'gccarm_bin' ]
-    for key in keys_of_interest:
-        if key in tmp_dict:
-            if type(tmp_dict[key]) is str:
-                exec(key + '="' + tmp_dict[key] + '"')
-            elif type(tmp_dict[key]) is int:
-                exec(key + '=' + str(tmp_dict[key]))
-            else:
-                raise Exception(key + ' in ' + site_file + ' is of an ' + \
-                        'unsupported type')
+   with open(site_file) as f:
+      exec(f.read(), tmp_dict)
+   keys_of_interest = [ 'gccarm_bin' ]
+   for key in keys_of_interest:
+      if key in tmp_dict:
+         if type(tmp_dict[key]) is str:
+            exec(key + '="' + tmp_dict[key] + '"')
+         elif type(tmp_dict[key]) is int:
+            exec(key + '=' + str(tmp_dict[key]))
+         else:
+            raise Exception(key + ' in ' + site_file + ' is of an unsupported type')
 
-have_bin = 'gccarm_bin' in globals()
-
-if not have_bin:
-  raise Exception('You must first create the file ' + site_file + \
+if not ('gccarm_bin' in globals()):
+   raise Exception('You must first create the file ' + site_file + \
       ' before building.  See ' + \
       '~/sample_rrf_arduino_paths.py for an example.')
 
@@ -81,14 +84,17 @@ os.environ['GCCARM_BIN'] = gccarm_bin
 # The source directories we will be building
 #
 core_dirs = [
-    'cores',
-    'libraries',
-    'variants',
-    'asf' ]
+   'cores',
+   'libraries',
+   'variants',
+   'asf' ]
+
 
 ############
 #
 # Source directories to ignore
+#
+
 if platform == 'duet':
    # Use USB CDC driver; do not use combo HID + CDC like Arduino Due
    ignore_dirs = [
@@ -298,10 +304,12 @@ elif platform == 'radds':
       'system/CMSIS/Device/ATMEL/sam3n',
       'system/CMSIS/Device/ATMEL/sam4s' ]
 
+
 ##########
 #
 # Include file directories
 #
+
 if platform == 'duet':
    # Use USB CDC driver; do not use combo HID + CDC like Arduino Due
    include_paths = [
@@ -429,12 +437,12 @@ if platform == 'radds':
          '-DUSE_SAM3X_DMAC',
          '-DDMA_TIMEOUT_COMPUTE' ] )
 
-# C compiler flags
+# Additional C only compiler flags
 env.Replace( CFLAGS = [
     '-O2',
     '-std=gnu99' ] )
 
-# C++ flags
+# Additional C++ only flags
 env.Replace( CXXFLAGS = [
     '-fno-threadsafe-statics',
     '-fno-rtti',
@@ -442,8 +450,12 @@ env.Replace( CXXFLAGS = [
     '-O2',
     '-std=gnu++11' ] )
 
-env.SetDefault( GCCARM_BIN = gccarm_bin )
 
+##########
+#
+# Build tools
+
+env.SetDefault( GCCARM_BIN = gccarm_bin )
 env.Replace( RANLIB = "$GCCARM_BIN/arm-none-eabi-ranlib" )
 env.Replace( CC = "$GCCARM_BIN/arm-none-eabi-gcc" )
 env.Replace( CXX = "$GCCARM_BIN/arm-none-eabi-g++" )
@@ -455,10 +467,17 @@ env.Replace( OBJCOPY = "$GCCARM_BIN/arm-none-eabi-objcopy" )
 env.Replace( ELF = "$GCCARM_BIN/arm-none-eabi-gcc" )
 env.Replace( LD = "$GCCARM_BIN/arm-none-eabi-gcc" )
 
+##########
+#
 # Generate the list of source directories to consider
+
 src_dirs = list_dirs(core_dirs, ignore_dirs)
 
+
+##########
+#
 # Generate the list of source files to compile
+
 srcs = []
 for dir in src_dirs:
     srcs += \
@@ -468,5 +487,8 @@ for dir in src_dirs:
 
 env.Depends(srcs, join(scons_variant_dir, 'libraries', 'Storage', 'sd_mmc_mem.h'))
 
+##########
+#
 # Now generate the target library
+
 env.Library(join(scons_variant_dir, target_name), srcs)
