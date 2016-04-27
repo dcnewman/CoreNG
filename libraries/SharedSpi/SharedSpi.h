@@ -141,7 +141,7 @@ spi_status_t sspi_transceive_packet(const uint8_t *tx_data, uint8_t *rx_data, si
 spi_status_t sspi_transceive_packet16(const uint16_t *tx_data, uint16_t *rx_data, size_t len);
 #endif
 
-#if defined(USE_SAM3X_DMAC)
+#if defined(USE_SAM3X_DMAC) && !defined(RADDS_SD)
 
 #define SPI_TX_IDX 1 // DMAC HW interface id for SPI TX (Table 22-2. DMA Controller)
 #define SPI_RX_IDX 2 // DMAC HW interface id for SPI RX (Table 22-2. DMA Controller)

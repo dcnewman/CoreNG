@@ -11,6 +11,8 @@
 #ifndef CONF_BOARD_H
 #define CONF_BOARD_H
 
+#ifndef SD_MMC_SPI_MODE
+
 // HSMCI configuration
 #define SD_MMC_ENABLE
 #define CONF_BOARD_SD_MMC_HSMCI		1
@@ -34,6 +36,32 @@
 # error Configuration info missing for this board/processor
 
 #endif
+
+#else // SD_MMC_SPI_MODE
+
+#ifndef SD_DETECT_PIN
+#define SD_DETECT_PIN               14 // card detect switch; needs pullup asserted
+#endif
+
+#ifndef SD_DETECT_VAL
+#define SD_DETECT_VAL               0 // detect switch active low
+#endif
+
+#ifndef SD_DETECT_PIO_ID
+#define SD_DETECT_PIO_ID            ID_PIOD
+#endif
+
+#define CONF_BOARD_SD_MMC_HSMCI     0
+#define SD_MMC_HSMCI_MEM_CNT        0
+#define SD_MMC_HSMCI_SLOT_0_SIZE    4
+
+#define CONF_BOARD_SD_MMC_SPI       1
+#define SD_MMC_0_CD_GPIO            SD_DETECT_PIN
+#define SD_MMC_0_CD_DETECT_VALUE    SD_DETECT_VAL
+#define SD_MMC_0_CD_PIO_ID          SD_DETECT_PIO_ID
+#define SD_MMC_SPI_MEM_CNT          1
+
+#endif // SD_MMC_SPI_MODE
 
 #define ACCESS_MEM_TO_RAM_ENABLED
 

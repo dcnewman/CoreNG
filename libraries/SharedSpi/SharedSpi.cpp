@@ -203,7 +203,7 @@ void sspi_master_init(struct sspi_device *device, uint32_t bits)
 		spi_set_fixed_peripheral_select(SSPI);
 		spi_disable_peripheral_select_decode(SSPI);
 
-# if defined(USE_SAM3X_DMAC)
+# if defined(USE_SAM3X_DMAC) && !defined(RADDS_SD)
 	pmc_enable_periph_clk(ID_DMAC);
 	dmac_disable(DMAC);
 	dmac_set_priority_mode(DMAC, DMAC_GCFG_ARB_CFG_FIXED);
@@ -421,7 +421,7 @@ spi_status_t sspi_transceive_packet16(const uint16_t *tx_data, uint16_t *rx_data
 }
 #endif
 
-#if defined(USE_SAM3X_DMAC)
+#if defined(USE_SAM3X_DMAC) && !defined(RADDS_SD)
 
 void sspi_start_transmit_dma(Dmac *p_dmac, uint32_t ul_num, const void *src, uint32_t nb_bytes)
 {

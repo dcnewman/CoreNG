@@ -8,6 +8,12 @@
 #ifndef CONF_USB_H_
 #define CONF_USB_H_
 
+#ifdef RADDS_USB
+
+#include "conf_usb_radds.h"
+
+#else
+
 #include "compiler.h"
 
 /**
@@ -125,4 +131,5 @@ inline void core_cdc_set_coding_ext(uint8_t port, usb_cdc_line_coding_t *cfg) {}
 }
 #endif
 
+#endif /* RADDS */
 #endif /* CONF_USB_H_ */
