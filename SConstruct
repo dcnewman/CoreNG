@@ -425,8 +425,7 @@ env.Replace( CCFLAGS = [
 
 if platform == 'radds':
    env.Append( CCFLAGS = [
-         '-DRADDS_USB',
-         '-DRADDS_SD',
+         '-D__RADDS__',
          '-DSD_MMC_SPI_MODE',
          '-DSPI_PIN=77',
          '-DSPI_CHAN=0',
@@ -434,7 +433,8 @@ if platform == 'radds':
          '-DSD_DETECT_PIN=14',
          '-DSD_DETECT_VAL=0',
          '-DSD_DETECT_PIO_ID=ID_PIOD',
-         '-DUSE_SAM3X_DMAC',
+         '-DUSE_SAM3X_DMAC=1',
+         '-DUSE_USB_COMBO',
          '-DDMA_TIMEOUT_COMPUTE' ] )
 
 # Additional C only compiler flags

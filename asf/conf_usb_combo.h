@@ -1,5 +1,5 @@
 /*
- * conf_usb_radds.h -- Present the USB device as a composite USB device
+ * conf_usb_combo.h -- Present the USB device as a composite USB device
  *                     with both CDC and HID (mouse, keyboard) channels
  */
 
@@ -49,8 +49,8 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
-#ifndef _CONF_USB_RADDS_H_
-#define _CONF_USB_RADDS_H_
+#ifndef _CONF_USB_COMBO_H_
+#define _CONF_USB_COMBO_H_
 
 #include "compiler.h"
 
@@ -531,4 +531,4 @@
 #include "callback_def.h"
 */
 
-#endif // _CONF_USB_RADDS_H_
+#endif // _CONF_USB_COMBO_H_

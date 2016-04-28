@@ -8,9 +8,9 @@
 #ifndef CONF_USB_H_
 #define CONF_USB_H_
 
-#ifdef RADDS_USB
+#ifdef USE_USB_COMBO
 
-#include "conf_usb_radds.h"
+#include "conf_usb_combo.h"
 
 #else
 
