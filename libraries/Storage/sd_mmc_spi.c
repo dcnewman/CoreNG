@@ -447,7 +447,7 @@ void sd_mmc_spi_init(void)
 		usart_spi_init(SD_MMC_SPI);
 #else
 	if (!spi_is_enabled(SD_MMC_SPI)) {
-		spi_master_init(SD_MMC_SPI, SD_MMC_SPI_0_CS);
+		spi_master_init(SD_MMC_SPI, SD_MMC_SPI_0_CS, SPI_PIN);
 		spi_enable(SD_MMC_SPI);
 	}
 #endif

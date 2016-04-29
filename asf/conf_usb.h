@@ -8,12 +8,6 @@
 #ifndef CONF_USB_H_
 #define CONF_USB_H_
 
-#ifdef USE_USB_COMBO
-
-#include "conf_usb_combo.h"
-
-#else
-
 #include "compiler.h"
 
 /**
@@ -22,8 +16,12 @@
  */
 
 //! Device definition (mandatory)
+#ifndef USB_DEVICE_VENDOR_ID
 #define  USB_DEVICE_VENDOR_ID             0x2341
+#endif
+#ifndef USB_DEVICE_PRODUCT_ID
 #define  USB_DEVICE_PRODUCT_ID            0x003e
+#endif
 #define  USB_DEVICE_MAJOR_VERSION         1
 #define  USB_DEVICE_MINOR_VERSION         0
 #define  USB_DEVICE_POWER                 100 // Consumption on Vbus line (mA)
@@ -34,8 +32,12 @@
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_BUS_POWERED)
 
 //! USB Device string definitions (Optional)
+#ifndef USB_DEVICE_MANUFACTURE_NAME
 #define  USB_DEVICE_MANUFACTURE_NAME      "Think3DPrint3D"
+#endif
+#ifndef USB_DEVICE_PRODUCT_NAME
 #define  USB_DEVICE_PRODUCT_NAME          "Duet"
+#endif
 // #define  USB_DEVICE_SERIAL_NAME           "12...EF"
 
 /**
@@ -131,5 +133,4 @@ inline void core_cdc_set_coding_ext(uint8_t port, usb_cdc_line_coding_t *cfg) {}
 }
 #endif
 
-#endif /* RADDS */
 #endif /* CONF_USB_H_ */

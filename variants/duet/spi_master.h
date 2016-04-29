@@ -1,10 +1,5 @@
 // ASF 3.27.0
 
-// Note:
-// ASF 3.31 includes spi_master.c, .h in folder common/services/spi/sam_spi.
-// Unfortunately, that version assumes that only he "official" SPI CS pins are used.
-// So instead we use this version, which allows any pin to be used for CS.
-
 /**
  * \file
  *
@@ -118,9 +113,6 @@ extern "C"{
  */
 #define SPI_MODE_3  (SPI_CPOL | SPI_CPHA)
 
-/** Time-out value (number of attempts). */
-#define SPI_TIMEOUT       15000
-
 #ifndef SPI_TYPE_DEFS
 #define SPI_TYPE_DEFS
 //! SPI Flags Definition
@@ -138,12 +130,20 @@ struct spi_device {
 	uint8_t bits;
 };
 
+void spi_set_peripheral_chip_select_value(Spi *p_spi, uint32_t ul_value);
+void spi_set_delay_between_chip_select(Spi *p_spi, uint32_t ul_delay);
+void spi_set_baudrate_div(Spi *p_spi, uint32_t ul_pcs_ch,
+						  uint8_t uc_baudrate_divider);
+void spi_set_transfer_delay(Spi *p_spi, uint32_t ul_pcs_ch,
+							uint8_t uc_dlybs, uint8_t uc_dlybct);
+
+
 /** \brief Initialize the SPI in master mode.
  *
  * \param p_spi Base address of the SPI instance.
  *
  */
-extern void spi_master_init(Spi *p_spi, int ul_cs_pin);
+extern void spi_master_init(Spi *p_spi, int ul_cs_pin, int ul_npcs_pin);
 
 /**
  * \brief Set up an SPI device.
@@ -196,8 +196,42 @@ extern void spi_deselect_device(Spi *p_spi, const struct spi_device *device);
  *
  * \pre SPI device must be selected with spi_select_device() first.
  */
-extern spi_status_t spi_write_packet(Spi *p_spi, const uint8_t *data,
-									  size_t len);
+extern spi_status_t spi_write_packet(Spi *p_spi, const uint8_t *data, size_t len);
+
+/** \brief Get one data to a SPI peripheral.
+ *
+ * \param p_spi Base address of the SPI instance.
+ * \return The data byte
+ *
+ */
+static inline spi_status_t spi_get_timeout(Spi *p_spi, uint8_t *b)
+{
+	// wait for transmit register empty
+	uint32_t timeout = SPI_TIMEOUT;
+	while (!spi_is_tx_ready(p_spi)) {
+		if (--timeout == 0) {
+			return SPI_ERROR_TIMEOUT;
+		}
+	}
+
+	// write dummy byte with address and end transmission flag
+	p_spi->SPI_TDR = 0x000000FF | SPI_TDR_LASTXFER;
+
+	// wait for receive register 
+	timeout = SPI_TIMEOUT;
+	while (!spi_is_rx_ready(p_spi)) {
+		if (--timeout == 0) {
+			return SPI_ERROR_TIMEOUT;
+		}
+	}
+
+	// get byte from receive register
+	*b = (uint8_t)p_spi->SPI_RDR;
+
+	return SPI_OK;
+
+	// return (p_spi->SPI_RDR & SPI_RDR_RD_Msk);
+}
 
 /** \brief Receive one byte from an SPI device.
  *
@@ -205,15 +239,11 @@ extern spi_status_t spi_write_packet(Spi *p_spi, const uint8_t *data,
  * \param data      Data to read.
  *
  */
-extern spi_status_t spi_read_single(Spi *p_spi, uint8_t *data);
-
-/** \brief Receive one 16-bit word from an SPI device.
- *
- * \param p_spi     Base address of the SPI instance.
- * \param data      Data to read.
- *
- */
-extern spi_status_t spi_read_single16(Spi *p_spi, uint16_t *data);
+#define spi_read_single(p,d) spi_get_timeout(p,d)
+//static inline spi_status_t spi_read_single(Spi *p_spi, uint8_t *data)
+//{
+//	return spi_get(p_spi, data);
+//}
 
 /**
  * \brief Receive a sequence of bytes from an SPI device.
@@ -229,17 +259,42 @@ extern spi_status_t spi_read_single16(Spi *p_spi, uint16_t *data);
 extern spi_status_t spi_read_packet(Spi *p_spi, uint8_t *data, size_t len);
 
 /**
- * \brief Receive a sequence of 16-bit words from an SPI device.
+ * \brief Put one data to a SPI peripheral.
  *
- * All bytes sent out on SPI bus are sent as value 0xff.
+ * \param p_spi Base address of the SPI instance.
+ * \param data The data byte to be loaded
  *
- * \param p_spi     Base address of the SPI instance.
- * \param data      Data buffer to read.
- * \param len       Number of words of data to be read.
- *
- * \pre SPI device must be selected with spi_select_device() first.
  */
-extern spi_status_t spi_read_packet16(Spi *p_spi, uint16_t *data, size_t len);
+static inline spi_status_t spi_put_timeout(Spi *p_spi, uint8_t data)
+{
+	// p_spi->SPI_TDR = SPI_TDR_TD(data);
+
+	// wait for transmit register empty
+	uint32_t timeout = SPI_TIMEOUT;
+	while (!spi_is_tx_ready(p_spi)) {
+		if (!timeout--)
+		{
+			return SPI_ERROR_TIMEOUT;
+		}
+	}
+
+	// write byte with address and end transmission flag
+ 	p_spi->SPI_TDR = (uint32_t)data | SPI_TDR_LASTXFER;
+
+	// wait for receive register 
+	timeout = SPI_TIMEOUT;
+	while (!spi_is_rx_ready(p_spi)) {
+		if (--timeout == 0) {
+			return SPI_ERROR_TIMEOUT;
+		}
+	}
+
+	// clear status
+	p_spi->SPI_RDR;
+
+	return SPI_OK;
+}
+
 
 /** \brief Write one byte to an SPI device.
  *
@@ -247,20 +302,11 @@ extern spi_status_t spi_read_packet16(Spi *p_spi, uint16_t *data, size_t len);
  * \param data      Data to write.
  *
  */
-extern spi_status_t spi_write_single(Spi *p_spi, uint8_t data);
-
-/**
- * \brief Send and receive a sequence of bytes from an SPI device.
- *
- * \param p_spi     Base address of the SPI instance.
- * \param tx_data   Data buffer to send.
- * \param rx_data   Data buffer to read.
- * \param len       Length of data to be read.
- *
- * \pre SPI device must be selected with spi_select_device() first.
- */
-extern spi_status_t spi_transceive_packet(Spi *p_spi, uint8_t *tx_data, uint8_t *rx_data, size_t len);
-
+#define spi_write_single(p,d) spi_put_timeout(p,d)
+//static inline status_code_t spi_write_single(Spi *p_spi, uint8_t data)
+//{
+//        return spi_put(p_spi, (uint16_t)data);
+//}
 
 #if defined(USE_SAM3X_DMAC)
 

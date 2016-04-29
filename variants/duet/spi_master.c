@@ -51,8 +51,22 @@
 #include "spi_master.h"
 #include "spi_master_init.h"
 #include "variant.h"
-#include "sam/drivers/spi/spi.h"
 
+#ifndef F_CPU
+#define F_CPU 84000000UL
+#endif
+
+#ifndef MOSI_PIN
+#define MOSI_PIN MOSI
+#endif
+
+#ifndef MISO_PIN
+#define MISO_PIN MISO
+#endif
+
+#ifndef SCK_PIN
+#define SCK_PIN SCK
+#endif
 
 /**
  * \brief Max number when the chip selects are connected to a 4- to 16-bit decoder.
@@ -74,13 +88,99 @@
  */
 #define DEFAULT_CHIP_ID 1
 
+/**
+ * \brief Configure CS behavior for SPI transfer (\ref spi_cs_behavior_t).
+ *
+ * \param p_spi Pointer to an SPI instance.
+ * \param ul_pcs_ch Peripheral Chip Select channel (0~3).
+ * \param ul_cs_behavior Behavior of the Chip Select after transfer.
+ */
+void spi_configure_cs_behavior(Spi *p_spi, uint32_t ul_pcs_ch,
+                uint32_t ul_cs_behavior)
+{
+        if (ul_cs_behavior == SPI_CS_RISE_FORCED) {
+                p_spi->SPI_CSR[ul_pcs_ch] &= (~SPI_CSR_CSAAT);
+                p_spi->SPI_CSR[ul_pcs_ch] |= SPI_CSR_CSNAAT;
+        } else if (ul_cs_behavior == SPI_CS_RISE_NO_TX) {
+                p_spi->SPI_CSR[ul_pcs_ch] &= (~SPI_CSR_CSAAT);
+                p_spi->SPI_CSR[ul_pcs_ch] &= (~SPI_CSR_CSNAAT);
+        } else if (ul_cs_behavior == SPI_CS_KEEP_LOW) {
+                p_spi->SPI_CSR[ul_pcs_ch] |= SPI_CSR_CSAAT;
+        }
+}
+
+/**
+ * \brief Set number of bits per transfer.
+ *
+ * \param p_spi Pointer to an SPI instance.
+ * \param ul_pcs_ch Peripheral Chip Select channel (0~3).
+ * \param ul_bits Number of bits (8~16), use the pattern defined
+ *        in the device header file.
+ */
+void spi_set_bits_per_transfer(Spi *p_spi, uint32_t ul_pcs_ch,
+                uint32_t ul_bits)
+{
+        p_spi->SPI_CSR[ul_pcs_ch] &= (~SPI_CSR_BITS_Msk);
+        p_spi->SPI_CSR[ul_pcs_ch] |= ul_bits;
+}
+
+/**
+ * \brief Configure timing for SPI transfer.
+ *
+ * \param p_spi Pointer to an SPI instance.
+ * \param ul_pcs_ch Peripheral Chip Select channel (0~3).
+ * \param uc_dlybs Delay before SPCK (in number of MCK clocks).
+ * \param uc_dlybct Delay between consecutive transfers (in number of MCK clocks
+).
+ */
+void spi_set_transfer_delay(Spi *p_spi, uint32_t ul_pcs_ch,
+                uint8_t uc_dlybs, uint8_t uc_dlybct)
+{
+        p_spi->SPI_CSR[ul_pcs_ch] &= ~(SPI_CSR_DLYBS_Msk | SPI_CSR_DLYBCT_Msk);
+        p_spi->SPI_CSR[ul_pcs_ch] |= SPI_CSR_DLYBS(uc_dlybs)
+                        | SPI_CSR_DLYBCT(uc_dlybct);
+}
+
+/**
+ * \brief Set clock default state.
+ *
+ * \param p_spi Pointer to an SPI instance.
+ * \param ul_pcs_ch Peripheral Chip Select channel (0~3).
+ * \param ul_polarity Default clock state is logical one(high)/zero(low).
+ */
+void spi_set_clock_polarity(Spi *p_spi, uint32_t ul_pcs_ch,
+                uint32_t ul_polarity)
+{
+        if (ul_polarity) {
+                p_spi->SPI_CSR[ul_pcs_ch] |= SPI_CSR_CPOL;
+        } else {
+                p_spi->SPI_CSR[ul_pcs_ch] &= (~SPI_CSR_CPOL);
+        }
+}
+
+/**
+ * \brief Set Data Capture Phase.
+ *
+ * \param p_spi Pointer to an SPI instance.
+ *  \param ul_pcs_ch Peripheral Chip Select channel (0~3).
+ *  \param ul_phase Data capture on the rising/falling edge of clock.
+ */
+void spi_set_clock_phase(Spi *p_spi, uint32_t ul_pcs_ch, uint32_t ul_phase)
+{
+        if (ul_phase) {
+                p_spi->SPI_CSR[ul_pcs_ch] |= SPI_CSR_NCPHA;
+        } else {
+                p_spi->SPI_CSR[ul_pcs_ch] &= (~SPI_CSR_NCPHA);
+        }
+}
+
 /** \brief Initialize the SPI in master mode.
  *
  * \param p_spi  Base address of the SPI instance.
  *
  */
 
-void spi_master_init(Spi *p_spi, int ul_cs_pin)
+void spi_master_init(Spi *p_spi, int ul_cs_pin, int ul_npcs_pin)
 {
 	static bool init_comms = true;
 
@@ -88,19 +188,23 @@ void spi_master_init(Spi *p_spi, int ul_cs_pin)
 	{
 		spi_master_init_pins();
 
-		pmc_enable_periph_clk(SPI_INTERFACE_ID);
+		pmc_enable_periph_clk(ID_SPI0);
 
 		spi_reset(p_spi);
 
-		// set master mode, peripheral select, disable fault detection
 		spi_set_master_mode(p_spi);
+
 		spi_disable_mode_fault_detect(p_spi);
-		spi_disable_loopback(p_spi);
-		spi_set_peripheral_chip_select_value(p_spi, DEFAULT_CHIP_ID);
-		spi_set_fixed_peripheral_select(p_spi);
-		spi_disable_peripheral_select_decode(p_spi);
+
+		spi_enable(p_spi);
 
 		init_comms = false;
+	}
+
+	if (ul_npcs_pin >= 0)
+	{
+		pinMode(ul_npcs_pin, OUTPUT);
+		digitalWrite(ul_npcs_pin, HIGH);
 	}
 
 	if (ul_cs_pin >= 0)
@@ -116,6 +220,41 @@ void spi_master_init(Spi *p_spi, int ul_cs_pin)
 	dmac_enable(DMAC);
 #endif
 
+	// spi_enable_clock(p_spi);
+	// spi_reset(p_spi);
+	// spi_set_master_mode(p_spi);
+	// spi_disable_mode_fault_detect(p_spi);
+	// spi_disable_loopback(p_spi);
+	// spi_set_peripheral_chip_select_value(p_spi, DEFAULT_CHIP_ID);
+	// spi_set_fixed_peripheral_select(p_spi);
+    // spi_disable_peripheral_select_decode(p_spi);
+	// spi_set_delay_between_chip_select(p_spi, CONFIG_SPI_MASTER_DELAY_BCS);
+
+	// SPI_Enable(p_spi);
+}
+
+
+/**
+ * \brief Calculate the baudrate divider.
+ *
+ * \param baudrate Baudrate value.
+ * \param mck      SPI module input clock frequency (MCK clock, Hz).
+ *
+ * \return Divider or error code.
+ *   \retval > 0  Success.
+ *   \retval < 0  Error.
+ */
+int16_t spi_calc_baudrate_div(uint32_t baud_rate, uint32_t mck)
+{
+        int16_t baud_div = div_ceil(mck, baud_rate);
+
+        /* The value of baud_div is from 1 to 255 in the SCBR field. */
+        if (baud_div <= 0)
+			baud_div = 10;
+		else if (baud_div > 255)
+			baud_div = 255;
+
+        return baud_div;
 }
 
 /**
@@ -140,15 +279,36 @@ void spi_master_setup_device(Spi *p_spi, const struct spi_device *device,
 	UNUSED(flags);
 
 	spi_reset(p_spi);
-	spi_set_transfer_delay(p_spi, device->id, CONFIG_SPI_MASTER_DELAY_BS,
-			CONFIG_SPI_MASTER_DELAY_BCT);
-	spi_set_bits_per_transfer(p_spi, device->id,
-			CONFIG_SPI_MASTER_BITS_PER_TRANSFER);
-	int16_t baud_div = spi_calc_baudrate_div(baud_rate, SystemCoreClock);
-	spi_set_baudrate_div(p_spi, device->id, baud_div);
-	spi_configure_cs_behavior(p_spi, device->id, SPI_CS_KEEP_LOW);
-	spi_set_clock_polarity(p_spi, device->id, flags >> 1);
-	spi_set_clock_phase(p_spi, device->id, ((flags & 0x1) ^ 0x1));
+	spi_set_master_mode(p_spi);
+	spi_disable_mode_fault_detect(p_spi);
+
+	// Set SPI mode 0, clock, select not active after transfer
+	// with delay between transfers
+	int16_t baud_div = spi_calc_baudrate_div(baud_rate, F_CPU);
+	p_spi->SPI_CSR[device->id] =
+		SPI_CSR_NCPHA |          // Data capture on rising edge of clock
+		SPI_CSR_CSAAT |          // CS behavior == SPI_CS_KEEP_LOW
+		SPI_CSR_SCBR(baud_div) | // Baud rate
+		device->bits |           // Transfer bit width
+		SPI_CSR_DLYBCT(1);
+	/*
+	 * SPI_ConfigureNPCS(p_spi, device->id,
+	 *                SPI_CSR_NCPHA |          // Data capture on rising edge of clock
+         *	          SPI_CSR_CSAAT |          // CS behavior == SPI_CS_KEEP_LOW
+	 *	 	  SPI_CSR_SCBR(baud_div) | // Baud rate
+	 *		  device->bits |           // Transfer bit width
+	 *		  SPI_CSR_DLYBCT(1));      // Transfer delay
+	 */
+	spi_enable(p_spi);
+
+	// spi_set_bits_per_transfer(p_spi, device->id, device->bits);
+	// spi_set_transfer_delay(p_spi, device->id, CONFIG_SPI_MASTER_DELAY_BS,
+	//					   CONFIG_SPI_MASTER_DELAY_BCT);
+	// spi_set_baudrate_div(p_spi, device->id,
+	//					 spi_calc_baudrate_div(baud_rate, F_CPU));
+	// spi_configure_cs_behavior(p_spi, device->id, SPI_CS_KEEP_LOW);
+	// spi_set_clock_polarity(p_spi, device->id, flags >> 1);
+	// spi_set_clock_phase(p_spi, device->id, ((flags & 0x1) ^ 0x1));
 }
 
 /**
@@ -203,111 +363,6 @@ void spi_deselect_device(Spi *p_spi, const struct spi_device *device)
 
 	// Assert all lines; no peripheral is selected.
 	spi_set_peripheral_chip_select_value(p_spi, NONE_CHIP_SELECT_ID);
-}
-
-/** \brief Get one data to a SPI peripheral.
- *
- * \param p_spi Base address of the SPI instance.
- * \return The data byte
- *
- */
-spi_status_t spi_read_single(Spi *p_spi, uint8_t *b)
-{
-	// wait for transmit register empty
-	uint32_t timeout = SPI_TIMEOUT;
-	while (!spi_is_tx_ready(p_spi)) {
-		if (--timeout == 0) {
-			return SPI_ERROR_TIMEOUT;
-		}
-	}
-
-	// write dummy byte with address and end transmission flag
-	p_spi->SPI_TDR = 0x000000FF | SPI_TDR_LASTXFER;
-
-	// wait for receive register
-	timeout = SPI_TIMEOUT;
-	while (!spi_is_rx_ready(p_spi)) {
-		if (--timeout == 0) {
-			return SPI_ERROR_TIMEOUT;
-		}
-	}
-
-	// get byte from receive register
-	*b = (uint8_t)p_spi->SPI_RDR;
-
-	return SPI_OK;
-
-	// return (p_spi->SPI_RDR & SPI_RDR_RD_Msk);
-}
-
-/** \brief Get one data to a SPI peripheral.
- *
- * \param p_spi Base address of the SPI instance.
- * \return The data byte
- *
- */
-spi_status_t spi_read_single16(Spi *p_spi, uint16_t *b)
-{
-	// wait for transmit register empty
-	uint32_t timeout = SPI_TIMEOUT;
-	while (!spi_is_tx_ready(p_spi)) {
-		if (--timeout == 0) {
-			return SPI_ERROR_TIMEOUT;
-		}
-	}
-
-	// write dummy byte with address and end transmission flag
-	p_spi->SPI_TDR = 0x0000FFFF | SPI_TDR_LASTXFER;
-
-	// wait for receive register
-	timeout = SPI_TIMEOUT;
-	while (!spi_is_rx_ready(p_spi)) {
-		if (--timeout == 0) {
-			return SPI_ERROR_TIMEOUT;
-		}
-	}
-
-	// get byte from receive register
-	*b = (uint16_t)p_spi->SPI_RDR;
-
-	return SPI_OK;
-}
-
-/**
- * \brief Put one data to a SPI peripheral.
- *
- * \param p_spi Base address of the SPI instance.
- * \param data The data byte to be loaded
- *
- */
-spi_status_t spi_write_single(Spi *p_spi, uint8_t data)
-{
-	// p_spi->SPI_TDR = SPI_TDR_TD(data);
-
-	// wait for transmit register empty
-	uint32_t timeout = SPI_TIMEOUT;
-	while (!spi_is_tx_ready(p_spi)) {
-		if (!timeout--)
-		{
-			return SPI_ERROR_TIMEOUT;
-		}
-	}
-
-	// write byte with address and end transmission flag
- 	p_spi->SPI_TDR = (uint32_t)data | SPI_TDR_LASTXFER;
-
-	// wait for receive register
-	timeout = SPI_TIMEOUT;
-	while (!spi_is_rx_ready(p_spi)) {
-		if (--timeout == 0) {
-			return SPI_ERROR_TIMEOUT;
-		}
-	}
-
-	// clear status
-	p_spi->SPI_RDR;
-
-	return SPI_OK;
 }
 
 /**
@@ -389,85 +444,50 @@ spi_status_t spi_read_packet(Spi *p_spi, uint8_t *data, size_t len)
 	return spi_read_single(p_spi, &data[len]);
 }
 
+
 /**
- * \brief Receive a sequence of 16-bit words from an SPI device.
+ * \brief Set Peripheral Chip Select (PCS) value.
  *
- * All bytes sent out on SPI bus are sent as value 0xff.
- *
- * \param p_spi     Base address of the SPI instance.
- * \param data      Data buffer to read.
- * \param len       Number of words of data to be read.
- *
- * \pre SPI device must be selected with spi_select_device() first.
+ * \param p_spi Pointer to an SPI instance.
+ * \param ul_value Peripheral Chip Select value.
+ *                 If PCS decode mode is not used, use \ref spi_get_pcs to build
+ *                 the value to use.
+ *                 On reset the decode mode is not enabled.
+ *                 The decode mode can be enabled/disabled by follow functions:
+ *                 \ref spi_enable_peripheral_select_decode,
+ *                 \ref spi_disable_peripheral_select_decode.
  */
-spi_status_t spi_read_packet16(Spi *p_spi, uint16_t *data, size_t len)
+void spi_set_peripheral_chip_select_value(Spi *p_spi, uint32_t ul_value)
 {
-	if (len-- == 0)
-		return SPI_OK;
-
-	for (uint16_t i = 0; i < len; i++)
-	{
-		uint32_t timeout = SPI_TIMEOUT;
-		while (!spi_is_tx_ready(p_spi)) {
-			if (!timeout--) {
-				return SPI_ERROR_TIMEOUT;
-			}
-		}
-
-		p_spi->SPI_TDR = 0x0000FFFF;
-
-		timeout = SPI_TIMEOUT;
-		while (!spi_is_rx_ready(p_spi)) {
-			if (!timeout--) {
-				return SPI_ERROR_TIMEOUT;
-			}
-		}
-
-		data[i] = (uint16_t)(p_spi->SPI_RDR);
-	}
-
-	return spi_read_single16(p_spi, &data[len]);
+        p_spi->SPI_MR &= (~SPI_MR_PCS_Msk);
+        p_spi->SPI_MR |= SPI_MR_PCS(ul_value);
 }
 
 /**
- * \brief Send and receive a sequence of bytes from an SPI device.
+ * \brief Set delay between chip selects (in number of MCK clocks).
+ *  If DLYBCS <= 6, 6 MCK clocks will be inserted by default.
  *
- * \param p_spi     Base address of the SPI instance.
- * \param tx_data   Data buffer to send.
- * \param rx_data   Data buffer to read.
- * \param len       Length of data to be read.
- *
- * \pre SPI device must be selected with spi_select_device() first.
+ * \param p_spi Pointer to an SPI instance.
+ * \param ul_delay Delay between chip selects (in number of MCK clocks).
  */
-spi_status_t spi_transceive_packet(Spi *p_spi, uint8_t *tx_data, uint8_t *rx_data, size_t len)
+void spi_set_delay_between_chip_select(Spi *p_spi, uint32_t ul_delay)
 {
-	uint32_t timeout = SPI_TIMEOUT;
-	uint8_t val;
-	uint32_t i = 0;
+        p_spi->SPI_MR &= (~SPI_MR_DLYBCS_Msk);
+        p_spi->SPI_MR |= SPI_MR_DLYBCS(ul_delay);
+}
 
-	while (len) {
-		timeout = SPI_TIMEOUT;
-		while (!spi_is_tx_ready(p_spi)) {
-			if (!timeout--) {
-				return SPI_ERROR_TIMEOUT;
-			}
-		}
-		spi_write_single(p_spi, tx_data[i]);
-
-		timeout = SPI_TIMEOUT;
-		while (!spi_is_rx_ready(p_spi)) {
-			if (!timeout--) {
-				return SPI_ERROR_TIMEOUT;
-			}
-		}
-		spi_read_single(p_spi, &val);
-
-		rx_data[i] = val;
-		i++;
-		len--;
-	}
-
-	return SPI_OK;
+/**
+ * \brief Set Serial Clock Baud Rate divider value (SCBR).
+ *
+ * \param p_spi Pointer to an SPI instance.
+ * \param ul_pcs_ch Peripheral Chip Select channel (0~3).
+ * \param uc_baudrate_divider Baudrate divider from MCK.
+ */
+void spi_set_baudrate_div(Spi *p_spi, uint32_t ul_pcs_ch,
+                uint8_t uc_baudrate_divider)
+{
+        p_spi->SPI_CSR[ul_pcs_ch] &= (~SPI_CSR_SCBR_Msk);
+        p_spi->SPI_CSR[ul_pcs_ch] |= SPI_CSR_SCBR(uc_baudrate_divider);
 }
 
 #if defined(USE_SAM3X_DMAC)

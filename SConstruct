@@ -27,10 +27,10 @@ else:
 
 if arch == 'SAM3X8E':
    mcpu = 'cortex-m3'
-   fcpu = '84000000L'
+   fcpu = '84000000'
 elif arch == 'SAM4E8E':
    mcpu = 'cortex-m4'
-   fcpu = '120000000L'
+   fcpu = '120000000'
 else:
    raise Exception('Unrecognized architecture ' + arch)
 
@@ -264,12 +264,11 @@ elif platform == 'radds':
       'asf/common/services/freertos',
       'asf/common/services/calendar',
       'asf/common/services/adp',
-      'asf/common/services/usb/class/hid/host',
-      'asf/common/services/usb/class/hid/device/mtouch',
-      'asf/common/services/usb/class/hid/dual/mouse/example',
       'asf/common/services/usb/class/phdc',
       'asf/common/services/usb/class/msc',
+      'asf/common/services/usb/class/hid',
       'asf/common/services/usb/class/dfu_flip',
+      'asf/common/services/usb/class/composite',
       'asf/common/services/usb/class/aoa',
       'asf/common/drivers',
       'libraries/HID',
@@ -386,12 +385,8 @@ elif platform == 'radds':
       'asf/common/services/sleepmgr',
       'asf/common/services/usb',
       'asf/common/services/usb/udc',
-      'asf/common/services/usb/class/composite',
-      'asf/common/services/usb/class/composite/device',
       'asf/common/services/usb/class/cdc',
       'asf/common/services/usb/class/cdc/device',
-      'asf/common/services/usb/class/hid',
-      'asf/common/services/usb/class/hid/device',
       'asf/thirdparty/CMSIS/Include',
       'variants/duet' ]
 
@@ -434,7 +429,11 @@ if platform == 'radds':
          '-DSD_DETECT_VAL=0',
          '-DSD_DETECT_PIO_ID=ID_PIOD',
          '-DUSE_SAM3X_DMAC=1',
-         '-DUSE_USB_COMBO',
+#         '-DUSE_USB_COMBO',
+	 '-DUSB_DEVICE_VENDOR_ID=0x2341',
+	 '-DUSB_DEVICE_PRODUCT_ID=0x003e',
+	 '-DUSB_DEVICE_PRODUCT_NAME=\\"Arduino Due\\"',
+	 '-DUSB_DEVICE_MANUFACTURE_NAME=\\"Arduino S.r.l.\\"',
          '-DDMA_TIMEOUT_COMPUTE' ] )
 
 # Additional C only compiler flags
