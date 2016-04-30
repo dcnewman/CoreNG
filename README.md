@@ -1,5 +1,11 @@
 # CoreNG
-New hardware abstraction layer for RepRapFirmware based on ASF 3.31
+
+Hardware abstraction layer for RepRapFirmware based on ASF 3.31
+
+> This repository is a fork of [dc42's CoreNG](https://github.com/dc42/CoreNG)
+> but with additions to build using the scons command line tool rather than
+> the Eclipse IDE.  See the file `INSTALL.md` for instructions on
+> how to build this fork for RADDS v1.5 electronics.
 
 This is a new hardware abstraction layer for RepRapFirmware based on
 the Atmel Software Framework (ASF) 3.31 with some additional modules
@@ -14,7 +20,8 @@ Duet), support for PWM outputs via timer/counter channels, and the use of
 the on-chip hardware ADC scheduler.  Also the USB interface is interrupt
 and DMA driven instead of polled.
 
-To build it, import the project into Eclipse Mars.2, select the desired
-configuration (SAM3X8E or SAM4E8E), and press Build.  Or, if you dislike
-IDEs, then use the scons command line tool as per the directions found
-in the `INSTALL.md` file.
+To build it, import the project into [Eclipse](https://eclipse.org/)
+Mars.2, select the desired configuration (SAM3X8E or SAM4E8E), and
+press Build.  Or, if you dislike IDEs, then use the
+[scons](http://scons.org/) command line tool as per the directions
+found in the `INSTALL.md` file.
