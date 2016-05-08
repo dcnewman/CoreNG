@@ -17,10 +17,10 @@
 
 //! Device definition (mandatory)
 #ifndef USB_DEVICE_VENDOR_ID
-#define  USB_DEVICE_VENDOR_ID             0x2341
+#define  USB_DEVICE_VENDOR_ID             0x03EB			// Atmel VID
 #endif
 #ifndef USB_DEVICE_PRODUCT_ID
-#define  USB_DEVICE_PRODUCT_ID            0x003e
+#define  USB_DEVICE_PRODUCT_ID            0x2404			// Atmel PID for CDC applications
 #endif
 #define  USB_DEVICE_MAJOR_VERSION         1
 #define  USB_DEVICE_MINOR_VERSION         0
