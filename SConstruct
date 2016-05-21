@@ -27,10 +27,8 @@ else:
 
 if arch == 'SAM3X8E':
    mcpu = 'cortex-m3'
-   fcpu = '84000000'
 elif arch == 'SAM4E8E':
    mcpu = 'cortex-m4'
-   fcpu = '120000000'
 else:
    raise Exception('Unrecognized architecture ' + arch)
 
@@ -414,7 +412,6 @@ env.Replace( CCFLAGS = [
       '-mcpu=' + mcpu,
       '-Dprintf=iprintf',
       '-D__' + arch + '__',
-      '-DF_CPU=' + fcpu,
       '-DUDD_ENABLE',
       '-DUDD_NO_SLEEP_MGR' ] )
 

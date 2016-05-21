@@ -1,4 +1,4 @@
-#include "Arduino.h"
+#include "Core.h"
 #include "compiler.h"
 #include "variant.h"
 #include "spi_master_init.h"

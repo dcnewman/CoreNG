@@ -46,7 +46,7 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
-#include "Arduino.h"
+#include "Core.h"
 #include "compiler.h"
 #include "spi_master.h"
 #include "spi_master_init.h"
