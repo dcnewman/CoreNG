@@ -1,8 +1,3 @@
-/*
- * conf_usb_radds.h -- Present the USB device as a composite USB device
- *                     with both CDC and HID (mouse, keyboard) channels
- */
-
 /**
  * \file
  *
@@ -155,29 +150,13 @@
 #define  UDI_CDC_PORT_NB 1
 
 //! Interface callback definition
-#define  UDI_CDC_ENABLE_EXT(port)             true
-#define  UDI_CDC_DISABLE_EXT(port)
-#define  UDI_CDC_RX_NOTIFY(port)
-#define  UDI_CDC_TX_EMPTY_NOTIFY(port)
-#define  UDI_CDC_SET_CODING_EXT(port,cfg)
-#define  UDI_CDC_SET_DTR_EXT(port,set)
-#define  UDI_CDC_SET_RTS_EXT(port,set)
-/*
- * #define UDI_CDC_ENABLE_EXT(port) my_callback_cdc_enable()
- * extern bool my_callback_cdc_enable(void);
- * #define UDI_CDC_DISABLE_EXT(port) my_callback_cdc_disable()
- * extern void my_callback_cdc_disable(void);
- * #define  UDI_CDC_RX_NOTIFY(port) my_callback_rx_notify(port)
- * extern void my_callback_rx_notify(uint8_t port);
- * #define  UDI_CDC_TX_EMPTY_NOTIFY(port) my_callback_tx_empty_notify(port)
- * extern void my_callback_tx_empty_notify(uint8_t port);
- * #define  UDI_CDC_SET_CODING_EXT(port,cfg) my_callback_config(port,cfg)
- * extern void my_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg);
- * #define  UDI_CDC_SET_DTR_EXT(port,set) my_callback_cdc_set_dtr(port,set)
- * extern void my_callback_cdc_set_dtr(uint8_t port, bool b_enable);
- * #define  UDI_CDC_SET_RTS_EXT(port,set) my_callback_cdc_set_rts(port,set)
- * extern void my_callback_cdc_set_rts(uint8_t port, bool b_enable);
- */
+#define  UDI_CDC_ENABLE_EXT(port)         core_cdc_enable(port)
+#define  UDI_CDC_DISABLE_EXT(port)        core_cdc_disable(port)
+#define  UDI_CDC_RX_NOTIFY(port)          core_cdc_rx_notify(port)
+#define  UDI_CDC_TX_EMPTY_NOTIFY(port)    core_cdc_tx_empty_notify(port)
+#define  UDI_CDC_SET_CODING_EXT(port,cfg) core_cdc_set_coding_ext(port,cfg)
+#define  UDI_CDC_SET_DTR_EXT(port,set)    core_cdc_set_dtr(port,set)
+#define  UDI_CDC_SET_RTS_EXT(port,set)    core_cdc_set_rts(port,set)
 
 //! Define it when the transfer CDC Device to Host is a low rate (<512000 bauds)
 //! to reduce CDC buffers size
@@ -527,16 +506,45 @@
 
 //! The includes of classes and other headers must be done at the end of this file to avoid compile error
 
-/* Example of include for interface
-#include "udi_msc.h"
-#include "udi_hid_kbd.h"
-#include "udi_hid_mouse.h"
-#include "udi_cdc.h"
-#include "udi_phdc.h"
-#include "udi_vendor.h"
-*/
-/* Declaration of callbacks used by USB
-#include "callback_def.h"
-*/
+/**
+ * USB Device Driver Configuration
+ * @{
+ */
+//@}
 
-#endif // _CONF_USB_RADDS_H_
+//! The includes of classes and other headers must be done at the end of this file to avoid compile error
+#include "udi_composite_conf.h"
+#include "usb_protocol_cdc.h"
+
+// Callback functions, all called from the USB ISR. See file USBSerial for the definitions.
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// This is called when we are plugged in and connect to a host
+bool core_cdc_enable(uint8_t port);
+
+// This is called when we get disconnected from the host
+void core_cdc_disable(uint8_t port);
+
+// This is called when data has been received
+void core_cdc_rx_notify(uint8_t port);
+
+// This is called when the transmit buffer has been emptied
+void core_cdc_tx_empty_notify(uint8_t port);
+
+// This is called when the host ask to raise or lower DTR
+inline void core_cdc_set_dtr(uint8_t port, bool b_enable) {}
+
+// This is called when the host ask to raise or lower RTS
+inline void core_cdc_set_rts(uint8_t port, bool b_enable) {}
+
+// This is called when the hot asks to change the port speed, data bits etc.
+inline void core_cdc_set_coding_ext(uint8_t port, usb_cdc_line_coding_t *cfg) {}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // _CONF_USB_COMBO_H_
