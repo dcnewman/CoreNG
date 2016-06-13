@@ -25,3 +25,5 @@ Mars.2, select the desired configuration (SAM3X8E or SAM4E8E), and
 press Build.  Or, if you dislike IDEs, then use the
 [scons](http://scons.org/) command line tool as per the directions
 found in the `INSTALL.md` file.
+
+License: GPLv3, see http://www.gnu.org/licenses/gpl-3.0.en.html.
