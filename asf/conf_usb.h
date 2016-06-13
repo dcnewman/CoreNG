@@ -8,6 +8,12 @@
 #ifndef CONF_USB_H_
 #define CONF_USB_H_
 
+#ifdef USE_USB_COMBO
+
+#include "conf_usb_combo.h"
+
+#else
+
 #include "compiler.h"
 
 /**
@@ -132,5 +138,7 @@ inline void core_cdc_set_coding_ext(uint8_t port, usb_cdc_line_coding_t *cfg) {}
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* USE_USB_COMBO */
 
 #endif /* CONF_USB_H_ */
