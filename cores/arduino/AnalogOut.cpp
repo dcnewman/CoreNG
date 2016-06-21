@@ -272,6 +272,9 @@ void AnalogWrite(uint32_t ulPin, uint32_t ulValue, uint16_t freq)
 
 	const PinDescription& pinDesc = g_APinDescription[ulPin];
 	const uint32_t attr = pinDesc.ulPinAttribute;
+#ifdef __RADDS__
+	const uint32_t chanb = pinDesc.ulTCChannel & 1; // Even on channel A, odd on channel B
+#endif
 	if ((attr & PIN_ATTR_DAC) != 0)
 	{
 		if (AnalogWriteDac(pinDesc, ulValue))
@@ -287,7 +290,12 @@ void AnalogWrite(uint32_t ulPin, uint32_t ulValue, uint16_t freq)
 		}
 	}
 #if SAM4E || __RADDS__
+#if SAM4E
 	else if ((attr & PIN_ATTR_TIMER) != 0)
+#else
+	// Stick to TC pins on channel B
+	else if (((attr & PIN_ATTR_TIMER) != 0) && (chanb != 0))
+#endif
 	{
 		if (AnalogWriteTc(pinDesc, ulValue, freq))
 		{
