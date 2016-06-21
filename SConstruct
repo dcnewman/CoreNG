@@ -528,7 +528,7 @@ env.Replace( CCFLAGS = [
 
 if platform == 'radds':
    env.Append( CCFLAGS = [
-         '-D__RADDS__',
+         '-D__RADDS__=1',
          '-DSD_MMC_SPI_MODE',
          '-DSPI_PIN=77',
          '-DSPI_CHAN=0',

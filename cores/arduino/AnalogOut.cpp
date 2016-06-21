@@ -148,7 +148,7 @@ static bool AnalogWritePwm(const PinDescription& pinDesc, uint32_t ulValue, uint
 	return true;
 }
 
-#if SAM4E
+#if SAM4E || __RADDS__
 const unsigned int numTcChannels = 9;
 
 // Map from timer channel to TC channel number
@@ -256,7 +256,7 @@ static bool AnalogWriteTc(const PinDescription& pinDesc, uint32_t ulValue, uint1
 	}
 	return true;
 }
-#endif	// SAM4E
+#endif	// SAM4E || __RADDS__
 
 // Analog write to DAC, PWM, TC or plain output pin
 void AnalogWrite(uint32_t ulPin, uint32_t ulValue, uint16_t freq)
@@ -286,7 +286,7 @@ void AnalogWrite(uint32_t ulPin, uint32_t ulValue, uint16_t freq)
 			return;
 		}
 	}
-#if SAM4E
+#if SAM4E || __RADDS__
 	else if ((attr & PIN_ATTR_TIMER) != 0)
 	{
 		if (AnalogWriteTc(pinDesc, ulValue, freq))
