@@ -92,7 +92,10 @@ void AnalogInEnableChannel(AnalogChannelNumber channel, bool enable)
 		{
 			activeChannels |= (1 << channel);
 #if SAM3XA
-			adc_enable_channel(ADC, GetAdcChannel(channel));
+#ifdef __RADDS__
+			if (ADC_TEMPERATURE_SENSOR != GetAdcChannel(channel))
+#endif
+				adc_enable_channel(ADC, GetAdcChannel(channel));
 			if (GetAdcChannel(channel) == ADC_TEMPERATURE_SENSOR)
 			{
 				adc_enable_ts(ADC);
