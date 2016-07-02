@@ -203,14 +203,12 @@ void spi_master_init(Spi *p_spi, int ul_cs_pin, int ul_npcs_pin)
 
 	if (ul_npcs_pin >= 0)
 	{
-		pinMode(ul_npcs_pin, OUTPUT);
-		digitalWrite(ul_npcs_pin, HIGH);
+		pinMode(ul_npcs_pin, OUTPUT_HIGH);
 	}
 
 	if (ul_cs_pin >= 0)
 	{
-		pinMode(ul_cs_pin, OUTPUT);
-		digitalWrite(ul_cs_pin, HIGH);
+		pinMode(ul_cs_pin, OUTPUT_HIGH);
 	}
 
 #if defined(USE_SAM3X_DMAC)
