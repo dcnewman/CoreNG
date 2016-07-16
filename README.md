@@ -1,6 +1,6 @@
 # CoreNG
 
-Hardware abstraction layer for RepRapFirmware based on ASF 3.31
+Hardware abstraction layer for RepRapFirmware based on Atmel ASF 3.31
 
 > This repository is a fork of [dc42's CoreNG](https://github.com/dc42/CoreNG)
 > but with additions to build using the scons command line tool rather than
