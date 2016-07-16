@@ -526,6 +526,11 @@ env.Replace( CCFLAGS = [
       '-DUDD_ENABLE',
       '-DUDD_NO_SLEEP_MGR' ] )
 
+if platform == 'ng':
+   env.Append( CCFLAGS = [
+      '-mfpu=fpv4-sp-d16',
+   	  '-mfloat-abi=softfp' ] )
+
 if platform == 'radds':
    env.Append( CCFLAGS = [
          '-D__RADDS__=1',
